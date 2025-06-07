@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 # Load the .env file
 load_dotenv()  
 HF_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+print("DEBUG - Loaded HF API Key:", HF_API_KEY)  # Add this line
 HF_API_URL = "https://api-inference.huggingface.co/models/"
 
 def generate_with_hf(model_name: str, prompt: str, max_length: int = 64, temperature: float = 0.7):

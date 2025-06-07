@@ -9,7 +9,9 @@ st.set_page_config(page_title="Memory-Augmented Multi-Agent Demo", layout="cente
 st.title("🧠 Multi-Agent Memory-Augmented LLM Demo")
 
 # 1) Single shared semantic memory (FAISS-backed)
-memory = SemanticMemory(embedding_model_name="all-MiniLM-L6-v2", dim=384, threshold=1.0)
+# New (cosine version):
+memory = SemanticMemory(embedding_model_name="all-MiniLM-L6-v2", threshold=0.7)
+
 
 # 2) Instantiate our agents, passing the same memory instance
 summ_agent = SummarizationAgent(memory=memory, hf_model_name="facebook/opt-125m")
