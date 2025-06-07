@@ -3,7 +3,7 @@
 from agents.base_agent import BaseAgent
 
 class SummarizationAgent(BaseAgent):
-    def __init__(self, memory, hf_model_name="facebook/opt-125m"):
+    def __init__(self, memory, hf_model_name="gpt2"):
         super().__init__(
             name="Summarization",
             memory=memory,
@@ -15,3 +15,4 @@ class SummarizationAgent(BaseAgent):
     def _build_prompt(self, user_input: str) -> str:
         # Prepend summarization instruction
         return f"Please summarize the following content:\n\n{user_input}\n\nSummary:"
+
