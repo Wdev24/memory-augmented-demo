@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory-Augmented LLM Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #d1d5db;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .response-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f1f3f4;
+        }
+        
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .response-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .cache-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .cached {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .not-cached {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .response-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f3f4;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Memory-Augmented LLM</h1>
+        <p class="subtitle">Ask questions and watch the AI remember similar queries!</p>
+        
+        <form id="chatForm">
+            <div class="input-group">
+                <label for="query">Your Question:</label>
+                <textarea 
+                    id="query" 
+                    name="query" 
+                    placeholder="Ask anything... Try similar questions to see memory in action!"
+                    required
+                ></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-primary">Ask AI</button>
+                <button type="button" id="clearBtn" class="btn-secondary">Clear Memory</button>
+            </div>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Thinking...
+        </div>
+        
+        <div id="responseSection" class="response-section" style="display: none;">
+            <div class="response-header">
+                <div class="response-title">AI Response</div>
+                <div id="cacheBadge" class="cache-badge"></div>
+            </div>
+            <div id="responseContent" class="response-content"></div>
+            <div id="stats" class="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('chatForm');
+        const loading = document.getElementById('loading');
+        const responseSection = document.getElementById('responseSection');
+        const responseContent = document.getElementById('responseContent');
+        const cacheBadge = document.getElementById('cacheBadge');
+        const stats = document.getElementById('stats');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            
+            // Show loading
+            loading.style.display = 'block';
+            responseSection.style.display = 'none';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query }),
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loading.style.display = 'none';
+                
+                if (data.error) {
+                    showResponse(data.error, false, {}, true);
+                } else {
+                    showResponse(data.response, data.cached, data.stats, false, data.response_time);
+                }
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                showResponse('Network error: ' + error.message, false, {}, true);
+            }
+        });
+        
+        clearBtn.addEventListener('click', async () => {
+            if (!confirm('Clear all cached responses?')) return;
+            
+            try {
+                const response = await fetch('/clear', { method: 'POST' });
+                const data = await response.json();
+                alert(data.message);
+                responseSection.style.display = 'none';
+            } catch (error) {
+                alert('Error clearing memory: ' + error.message);
+            }
+        });
+        
+        function showResponse(text, cached, statsData, isError = false, responseTime = '') {
+            responseContent.textContent = text;
+            responseContent.className = 'response-content' + (isError ? ' error' : '');
+            
+            if (!isError) {
+                cacheBadge.textContent = cached ? 'From Memory' : 'New Response';
+                cacheBadge.className = 'cache-badge ' + (cached ? 'cached' : 'not-cached');
+                
+                stats.innerHTML = `
+                    📊 <strong>Stats:</strong> 
+                    ${statsData.total_entries} cached responses | 
+                    Similarity threshold: ${statsData.similarity_threshold} | 
+                    Response time: ${responseTime}
+                `;
+            } else {
+                cacheBadge.textContent = 'Error';
+                cacheBadge.className = 'cache-badge error';
+                stats.innerHTML = '';
+            }
+            
+            responseSection.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
